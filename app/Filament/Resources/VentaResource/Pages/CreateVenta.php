@@ -52,10 +52,19 @@ class CreateVenta extends CreateRecord
         $productos = $data['productos'] ?? [];
         unset($data['productos']);
         
+        // Asegurar que productos sea un array
+        if (!is_array($productos)) {
+            $productos = [];
+        }
+        
         // Calcular el total
         $total = 0;
         foreach ($productos as $producto) {
-            $total += ($producto['precio_unitario'] ?? 0) * ($producto['cantidad'] ?? 0);
+            if (is_array($producto)) {
+                $precioUnitario = floatval($producto['precio_unitario'] ?? 0);
+                $cantidad = floatval($producto['cantidad'] ?? 0);
+                $total += $precioUnitario * $cantidad;
+            }
         }
         $data['total'] = $total;
         
@@ -64,16 +73,21 @@ class CreateVenta extends CreateRecord
         
         // Agregar productos a la venta
         foreach ($productos as $producto) {
-            $venta->productos()->attach($producto['producto_id'], [
-                'cantidad' => $producto['cantidad'],
-                'precio_unitario' => $producto['precio_unitario'],
-                'subtotal' => ($producto['precio_unitario'] ?? 0) * ($producto['cantidad'] ?? 0)
-            ]);
-            
-            // Reducir stock del producto
-            $productoModel = Producto::find($producto['producto_id']);
-            if ($productoModel) {
-                $productoModel->decrement('cantidad_disponible', $producto['cantidad']);
+            if (is_array($producto) && isset($producto['producto_id'])) {
+                $precioUnitario = floatval($producto['precio_unitario'] ?? 0);
+                $cantidad = floatval($producto['cantidad'] ?? 0);
+                
+                $venta->productos()->attach($producto['producto_id'], [
+                    'cantidad' => $cantidad,
+                    'precio_unitario' => $precioUnitario,
+                    'subtotal' => $precioUnitario * $cantidad
+                ]);
+                
+                // Reducir stock del producto
+                $productoModel = Producto::find($producto['producto_id']);
+                if ($productoModel) {
+                    $productoModel->decrement('cantidad_disponible', $cantidad);
+                }
             }
         }
         

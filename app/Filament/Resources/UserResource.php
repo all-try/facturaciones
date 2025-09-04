@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
+use App\Filament\Traits\HasResourceConfiguration;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
+    use HasResourceConfiguration;
+
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -110,39 +113,13 @@ class UserResource extends Resource
                     ->label('Email Verificado')
                     ->dateTime()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Fecha de Creación')
-                    ->icon('heroicon-o-calendar')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Fecha de Actualización')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                ...static::getTimestampColumns(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('Editar')
-                    ->icon('heroicon-o-pencil')
-                    ->color('warning'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('Eliminar')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger'),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                        ->label('Eliminar seleccionados')
-                        ->icon('heroicon-o-trash')
-                        ->color('danger'),
-                ]),
-            ]);
+            ->actions(static::getCommonTableActions())
+            ->bulkActions(static::getCommonBulkActions());
     }
 
     public static function getRelations(): array

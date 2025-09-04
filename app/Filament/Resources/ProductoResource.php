@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductoResource\Pages;
 use App\Filament\Resources\ProductoResource\RelationManagers;
+use App\Filament\Traits\HasResourceConfiguration;
 use App\Models\Producto;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductoResource extends Resource
 {
+    use HasResourceConfiguration;
+
     protected static ?string $model = Producto::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
@@ -50,10 +53,17 @@ class ProductoResource extends Resource
                     ->prefix('$'),
                 Forms\Components\FileUpload::make('imagen')
                     ->label('Imagen')
-                    ->image()
                     ->disk('public')
                     ->directory('productos')
                     ->visibility('public')
+                    ->acceptedFileTypes(['image/*', 'application/pdf', 'text/*'])
+                    ->imagePreviewHeight('250')
+                    ->loadingIndicatorPosition('left')
+                    ->panelAspectRatio('2:1')
+                    ->panelLayout('integrated')
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->uploadProgressIndicatorPosition('left')
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('cantidad_disponible')
                     ->label('Cantidad Disponible')
@@ -65,13 +75,7 @@ class ProductoResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->persistFiltersInSession()
-            ->persistSearchInSession()
-            ->persistSortInSession()
-            ->selectCurrentPageOnly(false)
-            ->deselectAllRecordsWhenFiltered(false)
-            ->selectable()
+        return static::configureTable($table)
             ->recordAction(null)
             ->recordUrl(null)
             ->columns([
@@ -79,7 +83,9 @@ class ProductoResource extends Resource
                     ->label('Imagen')
                     ->disk('public')
                     ->size(60)
-                    ->circular(),
+                    ->circular()
+                    ->defaultImageUrl(url('/images/no-image.png'))
+                    ->visibility('public'),
                 Tables\Columns\TextColumn::make('nombre')
                     ->label('Nombre')
                     ->searchable()
@@ -104,12 +110,7 @@ class ProductoResource extends Resource
                         default => 'danger',
                     })
                     ->icon('heroicon-m-archive-box'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Fecha de Creación')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->icon('heroicon-m-calendar'),
+                ...static::getTimestampColumns(),
             ])
             ->filters([
                 //

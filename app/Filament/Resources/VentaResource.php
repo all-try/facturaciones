@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\VentaResource\Pages;
 use App\Filament\Resources\VentaResource\RelationManagers;
+use App\Filament\Traits\HasResourceConfiguration;
 use App\Models\Venta;
 use App\Models\Producto;
 use Filament\Forms;
@@ -27,6 +28,7 @@ use Filament\Forms\Set;
 
 class VentaResource extends Resource
 {
+    use HasResourceConfiguration;
     protected static ?string $model = Venta::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
@@ -64,9 +66,9 @@ class VentaResource extends Resource
                 Forms\Components\TextInput::make('cliente_telefono')
                     ->label('Teléfono del Cliente')
                     ->tel(),
-                Forms\Components\TextInput::make('user.name')
+                Forms\Components\TextInput::make('vendedor_nombre')
                     ->label('Vendedor')
-                    ->default(Auth::user()?->name)
+                    ->default(Auth::user()?->name ?? 'Usuario no identificado')
                     ->disabled()
                     ->dehydrated(false),
                 Forms\Components\Hidden::make('user_id')
@@ -164,12 +166,7 @@ class VentaResource extends Resource
                     ->icon('heroicon-m-currency-dollar')
                     ->weight('bold')
                     ->color('success'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Fecha de Creación')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->icon('heroicon-m-clock'),
+                ...static::getTimestampColumns(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('fecha')
@@ -300,13 +297,14 @@ class VentaResource extends Resource
                     ->schema([
                         TextEntry::make('productos')
                             ->label('')
-                            ->formatStateUsing(function ($state) {
-                                if (!$state || $state->isEmpty()) {
+                            ->formatStateUsing(function ($state, $record) {
+                                $productos = $record->productos;
+                                if (!$productos || $productos->isEmpty()) {
                                     return 'No hay productos en esta venta';
                                 }
                                 
                                 $html = '<div class="space-y-4">';
-                                foreach ($state as $producto) {
+                                foreach ($productos as $producto) {
                                     $html .= '<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">';
                                     $html .= '<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
                                     
@@ -347,8 +345,8 @@ class VentaResource extends Resource
                                 $html .= '</div>';
                                 
                                 // Resumen
-                                $totalProductos = $state->count();
-                                $totalUnidades = $state->sum('pivot.cantidad');
+                                $totalProductos = $productos->count();
+                                $totalUnidades = $productos->sum('pivot.cantidad');
                                 $html .= '<div class="mt-4 pt-4 border-t border-gray-200 flex justify-between text-sm">';
                                 $html .= '<span class="text-gray-600">Total de productos: ' . $totalProductos . '</span>';
                                 $html .= '<span class="text-gray-600">Total de unidades: ' . $totalUnidades . '</span>';
