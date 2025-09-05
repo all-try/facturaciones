@@ -7,10 +7,28 @@ use App\Models\Producto;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
 class EditVenta extends EditRecord
 {
     protected static string $resource = VentaResource::class;
+    
+    public function mount(int | string $record): void
+    {
+        parent::mount($record);
+        
+        // Verificar si el vendedor puede editar esta venta
+        if (Auth::user()?->isVendedor() && $this->record->user_id !== Auth::id()) {
+            Notification::make()
+                ->title('Acceso denegado')
+                ->body('Solo puedes editar tus propias ventas.')
+                ->danger()
+                ->send();
+            
+            $this->redirect(VentaResource::getUrl('index'));
+        }
+    }
 
     protected function getHeaderActions(): array
     {

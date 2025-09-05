@@ -45,10 +45,8 @@ class VentaResource extends Resource
     {
         $query = parent::getEloquentQuery();
         
-        // Si es vendedor, solo mostrar sus propias ventas
-        if (Auth::user()?->isVendedor()) {
-            $query->where('user_id', Auth::id());
-        }
+        // Los vendedores pueden ver todas las ventas
+        // No aplicamos filtros aquí para permitir que vean todas las ventas
         
         return $query;
     }
@@ -306,7 +304,20 @@ class VentaResource extends Resource
                                 $html = '<div class="space-y-4">';
                                 foreach ($productos as $producto) {
                                     $html .= '<div class="border border-gray-200 rounded-lg p-4 bg-gray-50">';
-                                    $html .= '<div class="grid grid-cols-1 md:grid-cols-4 gap-4">';
+                                    $html .= '<div class="grid grid-cols-1 md:grid-cols-5 gap-4">';
+                                    
+                                    // Imagen del producto
+                                    $html .= '<div class="flex justify-center">';
+                                    if ($producto->imagen) {
+                                        $html .= '<img src="' . asset('storage/' . $producto->imagen) . '" alt="' . e($producto->nombre) . '" class="w-16 h-16 object-cover rounded-lg border border-gray-300">';
+                                    } else {
+                                        $html .= '<div class="w-16 h-16 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">';
+                                        $html .= '<svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">';
+                                        $html .= '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>';
+                                        $html .= '</svg>';
+                                        $html .= '</div>';
+                                    }
+                                    $html .= '</div>';
                                     
                                     // Producto
                                     $html .= '<div>';

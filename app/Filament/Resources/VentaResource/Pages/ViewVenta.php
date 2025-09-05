@@ -6,6 +6,7 @@ use App\Filament\Resources\VentaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class ViewVenta extends ViewRecord
 {
@@ -14,7 +15,8 @@ class ViewVenta extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->visible(fn () => Auth::user()?->isAdmin() || $this->record->user_id === Auth::id()),
         ];
     }
 
